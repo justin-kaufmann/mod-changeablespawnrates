@@ -1,0 +1,65 @@
+[worldserver]
+
+########################################
+# Mod-ChangeableSpawnRates
+########################################
+#
+#	Module.Enabled
+#		Description: Enable/Disable the module
+#       Default:     1 - Enabled
+#                    0 - Disabled
+#
+
+Module.Enabled = 1
+
+#
+#	Module.RespawnMultiplicator
+#		Description: Changes the Respawn-Times
+#			E.g. an Enemy has a default respawn time of 1 min. 
+#			When the Multiplicator has an value of 2.0 the respawntime gets doubled.
+#			This means, higher values increases the respawntimes, lower values decreases the respawntimes. 
+#		Default:	1.0 - Default Respawntimes
+#		
+
+Module.RespawnMultiplicator = 1.0
+
+#
+#	Module.Announce.Enabled
+#		Description: Enable/Disable for module-annoucement at players-login
+#		Default:	1 - Enabled
+#					0 - Disabled
+#
+
+Module.Announce.Enabled = 1
+
+#
+#	Module.DynamicSpawnrates.Enabled
+#		Description: Enable/Disable to toggle the use of dynamic spawnrates.
+#			If enabled the spawnrates will calculated by count of active players 
+#			E.g. 1 active player, factor = 1, 	 spawntime: 60s (default)
+#				 2 active player, factor = 0.5,	 spawntime: 30s
+#				 3 active player, factor = 0.33, spawntime: 19.8s 
+#				 4 active player, factor = 0.25, spawntime: 15s
+#		Default:	0 - Disabled
+#					1 - Enabled
+#
+
+Module.DynamicSpawnrates.Enabled = 0
+
+#	Module.DynamicSpawnrates.IgnoreMinimum
+#		Description: Enable/Disable to set/unset a threshold-minimum of spawn-rate-factor
+#			E.g. min possible factor 0.5 
+#		Default:	0 - Disabled		
+#					1 - Enabled
+#
+
+Module.DynamicSpawnrates.IgnoreMinimum = 0
+
+#	Module.DynamicSpawnrates.Minimum
+#		Description: Sets the thereshold-minimum-spawn-factor
+#			This means, that the spawnrate cant get under this value
+# 			E.g. 0.5
+#		Default:	0.5
+#
+
+Module.DynamicSpawnrates.Minimum = 0.5

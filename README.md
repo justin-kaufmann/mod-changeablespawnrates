@@ -9,3 +9,6 @@ Installation
   3. Execute the command "git clone https://github.com/justin-kaufmann/mod-changeablespawnrates.git"
   4. Open up cmake and generate the project
   5. Rebuild the project via Visual Studio
+  6. Execute the sql-files in modules data directory
+  7. Configure the module
+  8. Done!

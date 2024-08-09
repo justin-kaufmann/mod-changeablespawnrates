@@ -1,6 +1,7 @@
 # mod-changeablespawnrates
 
 This WoW-Azerothcore-Mod allows ac-server-administrators to change spawntimes based on a user-defined or dynamically calculated playerbased factor
+
 All settings are well-described in the configuration file.
 
 Installation

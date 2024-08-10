@@ -26,5 +26,5 @@ This WoW-Azerothcore-Mod allows ac-server-administrators to change spawntimes ba
   
 -  if the active players count is 1, the rate will be at 1.0
 -  if the active players count is greater than 1 and smaller than 50, the rate will get decreased like this $(rate = 1.0 - activeplayer-count * 0.01)$
--  At rate 0.5 for every player which logs in the rate will get decreased for 1/5 of 0,1 till the userdefined minimum (default: 0.5) or the maximum minimum is reached (0.01).
+-  At rate 0.5 for every player which logs in the rate will get decreased for 1/5 of 0,01 till the userdefined minimum (default: 0.5) or the maximum minimum is reached (0.01).
 -  If the calculated spawntime of a creature in the db would be lesser than 5 secs it will get to 5 secs, to avoid instant respawning

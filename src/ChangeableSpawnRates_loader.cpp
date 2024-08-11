@@ -1,6 +1,6 @@
 void AddChangeableSpawnRatesScripts();
 
-void Addmod_changeableSpawnRatesScripts()
+void Addmod_changeable_spawnratesScripts()
 {
     AddChangeableSpawnRatesScripts();
 }

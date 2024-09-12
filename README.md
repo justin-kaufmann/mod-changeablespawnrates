@@ -20,11 +20,14 @@ This WoW-Azerothcore-Mod allows ac-server-administrators to change spawntimes ba
   e.g.: the factor is set to 0.5, then all spawntimes (except instance/raid-mobs) will be halfed
 
 ### Dynamic spawnfactor:   
-  the factor gets calculated by the count of players.
-  
-  This means more players -> faster respawntimes, lesser players -> slower respawntimes
-  
--  if the active players count is 1, the rate will be at 1.0
--  if the active players count is greater than 1 and smaller than 50, the rate will get decreased like this $(rate = 1.0 - activeplayer-count * 0.01)$
--  At rate 0.5 for every player which logs in the rate will get decreased for 1/5 of 0,01 till the userdefined minimum (default: 0.5) or the maximum minimum is reached (0.01).
--  If the calculated spawntime of a creature in the db would be lesser than the minimum spawntime set in the config file (default: 5 secs) it will get to the minimum spawntime (e.g. 5 secs), to avoid instant respawning.
+  The dynamic spawn rate calculation follows these rules:
+
+  - If the active players count is 0 or 1, the spawn rate will be set to 1.0.
+  - For each additional active player, the spawn rate will decrease by 0.01 until it reaches a minimum of 0.5.
+  - Once the spawn rate reaches 0.5, for every player that logs in, the spawn rate will be decreased by 0.002.
+    Conversely, for every player that logs out, the spawn rate will be increased by 0.002.
+  - If the calculated spawn time of a creature in the database would be less than the minimum spawn time set in the configuration file (default: 5 seconds), the spawn time will be set to the minimum to avoid instant respawning.
+  - The minimum spawn rate can be configured by the user, with the default value being 0.5.
+    If this minimum is not configured, the lowest possible spawn rate will be 0.01.
+
+This spawn rate calculation mechanism ensures that the spawn rate is dynamically adjusted based on the number of active players in the game, with a gradual decrease in the rate as more players join. Once the rate reaches a minimum threshold, further adjustments are made in smaller increments, both when players log in and log out, to maintain a balanced gameplay experience. Additionally, the system enforces a configurable minimum spawn time to prevent instant respawning of creatures (default 5 secs).

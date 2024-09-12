@@ -4,7 +4,7 @@
 
 #include "ChangeableSpawnrates.h"
 
-void ChangeableSpawnRatesConfigurator::ConfigureSpawnrates()
+void CSRConfigurator::ConfigureSpawnrates()
 {
     if (CSR_Enable)
     {
@@ -30,13 +30,15 @@ void ChangeableSpawnRatesConfigurator::ConfigureSpawnrates()
                 "SET c.spawntimesecs = CASE "
                 "WHEN cc.spawntimesecs = {} THEN {} "
                 "WHEN cc.spawntimesecs * {} < {} THEN {} "
-                "ELSE cc.spawntimesecs * {} END",
+                "ELSE cc.spawntimesecs * {} END "
+                "WHERE cc.map NOT IN (SELECT map FROM instance_template)",
                 NULL, NULL,
                 CSR_RespawnMult, CSR_Minimum_Spawntime, CSR_Minimum_Spawntime,
                 CSR_RespawnMult);
         }
 
-        QueryResult xResult = WorldDatabase.Query("SELECT guid, spawntimesecs FROM custom_creature");
+        QueryResult xResult = WorldDatabase.Query("SELECT guid, spawntimesecs FROM custom_creature c "
+            "WHERE c.map NOT IN (SELECT map FROM instance_template)");
         if (xResult)
         {
             do
@@ -53,10 +55,7 @@ void ChangeableSpawnRatesConfigurator::ConfigureSpawnrates()
                         if (xMap)
                         {
                             int xMapInstanceID = xMap->GetInstanceId();
-                            if (xMapInstanceID > NULL)
-                            {
-                                continue;
-                            }
+                            if (xMapInstanceID > NULL) continue;
                             else
                             {
                                 Creature* xCreature = xMap->GetCreature(ObjectGuid(HighGuid::Unit, xCreatureGuid));
@@ -73,63 +72,97 @@ void ChangeableSpawnRatesConfigurator::ConfigureSpawnrates()
         }
     }
 }
-void ChangeableSpawnRatesConfigurator::ConfigureDynamicSpawnrates(int AAddPlayer = NULL, int ASubPlayer = NULL)
+float CSRConfigurator::CalculateFactorUpperHalf(int ACountPlayer)
+{
+    // Playercount: 1 <-> Rate: 1.0
+    if (ACountPlayer <= ONE)
+    {
+        return DEF_RESPAWNMULT;
+    }
+
+    // Rate <= 0.5 <-> CalcFactorLowerHalf
+    if (CSR_RespawnMult <= DEF_RESPAWNMULT_HALF)
+    {
+        return CalculateFactorLowerHalf(ACountPlayer);
+    }
+
+    // Rate > 0.5 <-> xFactor = 1.0 - ((CountPlayer - ONE) * 0.01)
+    float xFactor = DEF_RESPAWNMULT - ((ACountPlayer - ONE) * DEF_RESPAWNMULT_SUBTRACTOR);
+        
+    if (CSR_DynamicSpawnrates_IgnoreMinimum)
+    {
+        return (xFactor < DEF_RESPAWNMULT_MAX_MINIMUM) ? DEF_RESPAWNMULT_MAX_MINIMUM : xFactor;
+    }
+    return (xFactor < CSR_DynamicSpawnrates_MinMult) ? CSR_DynamicSpawnrates_MinMult : xFactor;
+}
+float CSRConfigurator::CalculateFactorLowerHalf(int ACountPlayer)
+{
+    if (CSR_RespawnMult > DEF_RESPAWNMULT_HALF)
+    {
+        return CalculateFactorUpperHalf(ACountPlayer);
+    }
+   
+    float xFactor = DEF_RESPAWNMULT_HALF - ((ACountPlayer - FIFTYONE) * DEF_RESPAWNMULT_SUBTRACTOR_UP50);
+
+    if (CSR_DynamicSpawnrates_IgnoreMinimum)
+    {
+        return (xFactor < DEF_RESPAWNMULT_MAX_MINIMUM) ? DEF_RESPAWNMULT_MAX_MINIMUM : xFactor;
+    }
+    return (xFactor < CSR_DynamicSpawnrates_MinMult) ? CSR_DynamicSpawnrates_MinMult : xFactor;
+    
+}
+void CSRConfigurator::ConfigureDynamicSpawnrates(int AAddPlayer = NULL, int ASubPlayer = NULL)
 {
     if (CSR_Enable && CSR_DynamicSpawnrates_Enable)
     {
+        if (sWorld->IsShuttingDown())
+        {
+            CSR_RespawnMult = DEF_RESPAWNMULT;
+            return;
+        }
+
+        if ((CSR_DynamicSpawnrates_IgnoreMinimum && CSR_RespawnMult == DEF_RESPAWNMULT_MAX_MINIMUM) or
+            (!CSR_DynamicSpawnrates_IgnoreMinimum && CSR_RespawnMult == CSR_DynamicSpawnrates_MinMult))
+        {
+            return;
+        }
+
         uint32 xCountOnlinePlayers = sWorld->GetPlayerCount();
 
+        bool xContinue = true;
         if (ASubPlayer > NULL)
         {
             xCountOnlinePlayers -= ASubPlayer;
+            if (xCountOnlinePlayers == FIFTY)
+            {
+                CSR_RespawnMult = DEF_RESPAWNMULT_HALF + DEF_RESPAWNMULT_SUBTRACTOR;
+                xContinue = false;
+            }
         }
 
-        if (xCountOnlinePlayers == ONE)
+        if (xContinue)
         {
-            CSR_RespawnMult = DEF_RESPAWNMULT;
-        }
-        else if (xCountOnlinePlayers > ONE)
-        {
-            if ((!CSR_DynamicSpawnrates_HalfMult_Reached) or (CSR_RespawnMult > DEF_RESPAWNMULT_HALF))
+            if (xCountOnlinePlayers <= ONE)
             {
-                CSR_RespawnMult = DEF_RESPAWNMULT - (DEF_RESPAWNMULT_SUBTRACTOR * xCountOnlinePlayers) + (ONE * DEF_RESPAWNMULT_SUBTRACTOR);
-
-                CSR_DynamicSpawnrates_HalfMult_Reached = CSR_RespawnMult <= DEF_RESPAWNMULT_HALF;
+                CSR_RespawnMult = DEF_RESPAWNMULT;
             }
-            else
+            else if (CSR_RespawnMult > DEF_RESPAWNMULT_HALF)
             {
-                if (AAddPlayer > NULL)
-                {
-                    CSR_RespawnMult -= (DEF_RESPAWNMULT_SUBTRACTOR * AAddPlayer) / FIVE;
-                }
-
-                if (ASubPlayer > NULL)
-                {
-                    if (CSR_RespawnMult <= DEF_RESPAWNMULT_HALF)
-                    {
-                        CSR_RespawnMult += (DEF_RESPAWNMULT_SUBTRACTOR * ASubPlayer) / FIVE;
-                    };
-                }
+                CSR_RespawnMult = CalculateFactorUpperHalf(xCountOnlinePlayers);
             }
-
-            if (!CSR_DynamicSpawnrates_IgnoreMinimum && (CSR_RespawnMult < CSR_DynamicSpawnrates_MinMult))
+            else if (CSR_RespawnMult <= DEF_RESPAWNMULT_HALF)
             {
-                CSR_RespawnMult = CSR_DynamicSpawnrates_MinMult;
-            }
-            else if (CSR_DynamicSpawnrates_IgnoreMinimum && (CSR_RespawnMult < DEF_RESPAWNMULT_MAX_MINIMUM))
-            {
-                CSR_RespawnMult = DEF_RESPAWNMULT_MAX_MINIMUM;
+                CSR_RespawnMult = CalculateFactorLowerHalf(xCountOnlinePlayers);
             }
         }
-
         CSR_RespawnMult = std::round(CSR_RespawnMult * THOUSAND) / THOUSAND;
 
         LOG_INFO("server.loading", "mod-ChangeableSpawnRates: PlayerCount: {}, Spawnrate: {}", xCountOnlinePlayers, CSR_RespawnMult);
 
-        ChangeableSpawnRatesConfigurator::ConfigureSpawnrates();
+        CSRConfigurator::ConfigureSpawnrates();
     }
 }
-bool ChangeableSpawnRatesConfigurator::CustomCreaturesHasMissingEntrys()
+bool CSRConfigurator::CustomCreaturesHasMissingEntrys()
 {
     QueryResult xQryResult = WorldDatabase.Query(
         "SELECT COUNT(*) FROM creature c "
@@ -148,7 +181,7 @@ bool ChangeableSpawnRatesConfigurator::CustomCreaturesHasMissingEntrys()
 
     return false;
 }
-bool ChangeableSpawnRatesConfigurator::CreatureNeedsUpdate()
+bool CSRConfigurator::CreatureNeedsUpdate()
 {
     QueryResult xQryResult = WorldDatabase.Query("SELECT COUNT(*) FROM creature c "
         "JOIN custom_creature cc ON c.guid = cc.guid "
@@ -166,19 +199,16 @@ bool ChangeableSpawnRatesConfigurator::CreatureNeedsUpdate()
     return false;
 }
 
-void ChangeableSpawnratesConfigLoader::OnBeforeConfigLoad(bool /*reload*/)
+void CSRConfigLoader::OnBeforeConfigLoad(bool /*reload*/)
 {
     LOG_INFO("ChangeableSpawnrates", "Load Config");
     LoadConfig();
 }
-void ChangeableSpawnratesConfigLoader::OnAfterConfigLoad(bool /*reload*/)
+void CSRConfigLoader::OnAfterConfigLoad(bool /*reload*/)
 {
-    if (CSR_Enable && !CSR_DynamicSpawnrates_Enable)
-    {
-        ChangeableSpawnRatesConfigurator::ConfigureSpawnrates();
-    }
+    if (CSR_Enable && !CSR_DynamicSpawnrates_Enable) CSRConfigurator::ConfigureSpawnrates();
 }
-void ChangeableSpawnratesConfigLoader::LoadConfig()
+void CSRConfigLoader::LoadConfig()
 {
     CSR_Enable = sConfigMgr->GetOption<bool>("Module.Enable", true);
     CSR_Announce_Enable = sConfigMgr->GetOption<bool>("Module.Announce.Enable", true);
@@ -189,46 +219,30 @@ void ChangeableSpawnratesConfigLoader::LoadConfig()
     CSR_Minimum_Spawntime = sConfigMgr->GetOption<float>("Module.MinimumSpawntime", DEF_MINIMUM_SPAWNTIME);
 }
 
-void ChangeableSpawnRatesPlayer::OnLogin(Player* player)
+void CSRPlayer::OnLogin(Player* APlayer)
 {
-    if (player && CSR_Enable)
+    if (APlayer && CSR_Enable)
     {
-        // Announce Module
         if (CSR_Announce_Enable)
         {
-            WorldSession* xPlayerSession = player->GetSession();
-            if (xPlayerSession)
-            {
-                ChatHandler(xPlayerSession).SendSysMessage("This server is running the |cff4CFF00Changeable Spawnrates |rmodule.");
-            }
+            WorldSession* xPlayerSession = APlayer->GetSession();
+            if (xPlayerSession) ChatHandler(xPlayerSession).SendSysMessage("This server is running the |cff4CFF00Changeable Spawnrates |rmodule.");
         }
 
-        // Configure dynamic spawnrates
-        if (CSR_DynamicSpawnrates_Enable)
-        {
-            ChangeableSpawnRatesConfigurator::ConfigureDynamicSpawnrates(ONE, NULL);
+        if (CSR_DynamicSpawnrates_Enable) CSRConfigurator::ConfigureDynamicSpawnrates(ONE, NULL);
 
-        }
-
-        AnnounceSpawnrate(player);
+        AnnounceSpawnrate(APlayer);
     }
 }
-void ChangeableSpawnRatesPlayer::OnLogout(Player* player)
+void CSRPlayer::OnLogout(Player* APlayer)
 {
-    // Configure dynamic spawnrates
-    if (player && CSR_Enable && CSR_DynamicSpawnrates_Enable)
-    {
-        ChangeableSpawnRatesConfigurator::ConfigureDynamicSpawnrates(NULL, ONE);
-    }
+    if (APlayer && CSR_Enable && CSR_DynamicSpawnrates_Enable) CSRConfigurator::ConfigureDynamicSpawnrates(NULL, ONE);
 }
-void ChangeableSpawnRatesPlayer::AnnounceSpawnrate(Player* player)
+void CSRPlayer::AnnounceSpawnrate(Player* APlayer)
 {
-    if (player && CSR_Enable && CSR_DynamicSpawnrates_Enable)
+    if (APlayer && CSR_Enable && CSR_DynamicSpawnrates_Enable)
     {
-        WorldSession* xPlayerSession = player->GetSession();
-        if (xPlayerSession)
-        {
-            ChatHandler(xPlayerSession).SendSysMessage("Respawnrate-factor: " + std::to_string(CSR_RespawnMult * HUNDRED));
-        }
+        WorldSession* xPlayerSession = APlayer->GetSession();
+        if (xPlayerSession) ChatHandler(xPlayerSession).SendSysMessage("Respawnrate-factor: " + std::to_string(CSR_RespawnMult * HUNDRED));
     }
 }

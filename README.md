@@ -23,7 +23,7 @@ This WoW-Azerothcore-Mod allows ac-server-administrators to change spawntimes ba
   The dynamic spawn rate calculation follows these rules:
 
   - If the active players count is 0 or 1, the spawn rate will be set to 1.0.
-  - For each additional active player, the spawn rate will decrease by 0.01 until it reaches a minimum of 0.5.
+  - For each additional active player, the spawn rate will decrease by 0.01 until it reaches 0.5.
   - Once the spawn rate reaches 0.5, for every player that logs in, the spawn rate will be decreased by 0.002.
     Conversely, for every player that logs out, the spawn rate will be increased by 0.002.
   - If the calculated spawn time of a creature in the database would be less than the minimum spawn time set in the configuration file (default: 5 seconds), the spawn time will be set to the minimum to avoid instant respawning.

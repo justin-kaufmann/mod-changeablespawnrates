@@ -29,6 +29,6 @@ This WoW-Azerothcore-Mod allows ac-server-administrators to change spawntimes ba
     Conversely, for every player that logs out, the spawn rate will be increased by 0.002.
   - If the calculated spawn time of a creature in the database would be less than the minimum spawn time set in the configuration file (default: 5 seconds), the spawn time will be set to the minimum to avoid instant respawning.
   - The minimum spawn rate can be configured by the user, with the default value being 0.5.
-    If this minimum is not configured, the lowest possible spawn rate will be 0.01.
+    this is not configured, the lowest possible spawn rate will be 0.01.
 
 This spawn rate calculation mechanism ensures that the spawn rate is dynamically adjusted based on the number of active players in the game, with a gradual decrease in the rate as more players join. Once the rate reaches a minimum threshold, further adjustments are made in smaller increments, both when players log in and log out, to maintain a balanced gameplay experience. Additionally, the system enforces a configurable minimum spawn time to prevent instant respawning of creatures (default 5 secs).

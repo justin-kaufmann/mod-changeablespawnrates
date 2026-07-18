@@ -219,7 +219,7 @@ void CSRConfigLoader::LoadConfig()
     CSR_Minimum_Spawntime = sConfigMgr->GetOption<float>("Module.MinimumSpawntime", DEF_MINIMUM_SPAWNTIME);
 }
 
-void CSRPlayer::OnLogin(Player* APlayer)
+void CSRPlayer::OnPlayerLogin(Player* APlayer)
 {
     if (APlayer && CSR_Enable)
     {
@@ -234,7 +234,7 @@ void CSRPlayer::OnLogin(Player* APlayer)
         AnnounceSpawnrate(APlayer);
     }
 }
-void CSRPlayer::OnLogout(Player* APlayer)
+void CSRPlayer::OnPlayerLogout(Player* APlayer)
 {
     if (APlayer && CSR_Enable && CSR_DynamicSpawnrates_Enable) CSRConfigurator::ConfigureDynamicSpawnrates(NULL, ONE);
 }

@@ -55,8 +55,8 @@ class CSRPlayer : public PlayerScript
 {
 public:
     CSRPlayer() : PlayerScript("ChangeableSpawnratesPlayer") { }
-    void OnLogin(Player* APlayer) override;
-    void OnLogout(Player* APlayer) override;
+    void OnPlayerLogin(Player* APlayer) override;
+    void OnPlayerLogout(Player* APlayer) override;
 private:
     void AnnounceSpawnrate(Player* /*player*/);
 };

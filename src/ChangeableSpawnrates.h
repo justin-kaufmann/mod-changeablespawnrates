@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "Chat.h"
 #include <MapMgr.h>
+#include "WorldSessionMgr.h"
 
 bool CSR_Enable = 1;
 bool CSR_Announce_Enable = 1;

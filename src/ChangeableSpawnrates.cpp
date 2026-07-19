@@ -11,10 +11,10 @@ void CSRConfigurator::ConfigureSpawnrates()
         if (CustomCreaturesHasMissingEntrys())
         {
             WorldDatabase.Execute(
-                "INSERT INTO custom_creature (guid, id1, id2, id3, map, zoneId, areaId, spawnMask, phaseMask, equipment_id, position_x, position_y, position_z,"
+                "INSERT INTO custom_creature (guid, id, map, zoneId, areaId, spawnMask, phaseMask, equipment_id, position_x, position_y, position_z,"
                 "orientation, spawntimesecs, wander_distance, currentwaypoint, curhealth, curmana, MovementType, npcflag, unit_flags, dynamicflags, ScriptName,"
                 "VerifiedBuild, CreateObject, Comment) "
-                "SELECT c.guid, c.id1, c.id2, c.id3, c.map, c.zoneId, c.areaId, c.spawnMask, c.phaseMask, c.equipment_id, c.position_x, c.position_y, c.position_z,"
+                "SELECT c.guid, c.id, c.map, c.zoneId, c.areaId, c.spawnMask, c.phaseMask, c.equipment_id, c.position_x, c.position_y, c.position_z,"
                 "c.orientation, c.spawntimesecs, c.wander_distance, c.currentwaypoint, c.curhealth, c.curmana, c.MovementType, c.npcflag, c.unit_flags, c.dynamicflags,"
                 "c.ScriptName, c.VerifiedBuild, c.CreateObject, c.Comment "
                 "FROM creature c "
